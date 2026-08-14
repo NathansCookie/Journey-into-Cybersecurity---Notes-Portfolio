@@ -1,0 +1,83 @@
+# NahamStore — Task Notes
+
+#===================
+"Task 2"
+#===================
+
+## Initial Setup
+
+Adding the IP to either /etc/hosts or C:\Windows\System32\drivers\etc\hosts
+
+This can also be done with:
+
+    echo [Related IP] nahamstore.thm >> /etc/hosts
+
+Visiting the site itself doesn't reveal much yet to me (Might be doing something wrong). Either way, we do need to add subdomains.
+
+First though, I'm gonna have a peek at their files.
+
+    gobuster dir -u http://nahamstore.thm -w /usr/share/wordlists/dirbuster/directory-list-lowercase-2.3-medium.txt
+
+    /search               (Status: 200) [Size: 3351]
+    /login                (Status: 200) [Size: 3099]
+    /register             (Status: 200) [Size: 3138]
+    /uploads              (Status: 301) [Size: 178] [--> http://127.0.0.1/uploads/]
+    /staff                (Status: 200) [Size: 2287]
+    /css                  (Status: 301) [Size: 178] [--> http://127.0.0.1/css/]
+    /js                   (Status: 301) [Size: 178] [--> http://127.0.0.1/js/]
+    /logout               (Status: 302) [Size: 0] [--> /]
+    /basket               (Status: 200) [Size: 2465]
+    /returns              (Status: 200) [Size: 3628]
+
+(All quite fancy to take with me)
+
+Anyhow, with some aid I was suggested to use FFUF, something I haven't used until this point.
+
+So with a simple copy and paste, I ran this:
+
+    ffuf -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u http://nahamstore.thm -H 'Host: FUZZ.nahamstore.thm'
+
+(OH BOY those are a lot of entries)
+
+We COULD search in between the noise, but we're just gonna add a quick filter to get rid of a common denominator, that being 25 lines, so:
+
+    ffuf -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u http://nahamstore.thm -H 'Host: FUZZ.nahamstore.thm' -fl 25
+
+aaaaan:
+Haza!
+
+    www          [Status: 301, Size: 194, Words: 7, Lines: 8, Duration: 7ms]
+    shop         [Status: 301, Size: 194, Words: 7, Lines: 8, Duration: 0ms]
+    marketing    [Status: 200, Size: 2025, Words: 692, Lines: 42, Duration: 3ms]
+    stock        [Status: 200, Size: 67, Words: 1, Lines: 1, Duration: 4ms]
+    WWW          [Status: 301, Size: 194, Words: 7, Lines: 8, Duration: 7ms]
+
+(Adding these badboys to the hosts file)
+
+aaaand:
+
+    http://www.nahamstore.thm
+
+Beautiful, I can see something (maybe I could've done this before, IT DOESNT MATTER, I have vision)
+
+
+#===================
+"Task 3"
+#===================
+
+## Jimmy Jones SSN
+Who is Jimmy Jones? Good question, id love to know too!
+Let's see if the sourcecode tells us something fancy!
+Nothing so far, but what if I just:
+
+    http://nahamstore.thm/staff
+
+Fascinating, so we got Ben and Adam here. This certainly feels like something, but no Jimmy Jones, so let's put a pin in this.
+
+Looking around though, I fear I'm not on the right track, so let's look at:
+
+    stock.nahamstore.thm
+
+and
+
+    marketing.nahamstore.thm
